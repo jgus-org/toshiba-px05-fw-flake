@@ -1,7 +1,7 @@
 {
   description = "Devshell + bundled firmware for flashing Toshiba PX05 SAS SSDs (PX05SVB/SMB/SRB) to firmware AS10";
 
-  # Standalone toolbox (run via `nix run`/`nix develop github:jgus/toshiba-px05-fw-flake`) with its own nixpkgs pin.
+  # Standalone toolbox (run via `nix run`/`nix develop github:jgus-org/toshiba-px05-fw-flake`) with its own nixpkgs pin.
   # The proprietary Toshiba firmware is fetched from Dell at build time. Makes no assumptions about the host it flashes
   # — intended for a live machine or a NixOS installer boot.
   inputs = {
@@ -60,7 +60,7 @@
             echo "Firmware bundled at \$PX05_FW ; flasher: px05-flash (run via sudo)"
             echo
             echo "Inventory (no root):   px05-flash --dry-run <serials...>"
-            echo "Flash:                 sudo nix run github:jgus/toshiba-px05-fw-flake -- <serials...>"
+            echo "Flash:                 sudo nix run github:jgus-org/toshiba-px05-fw-flake -- <serials...>"
             echo "  (or, in this shell:  sudo \"\$(command -v px05-flash)\" <serials...>)"
             echo
             echo "Refuses mounted / md / zfs member drives unless --force-in-use. Verifies FW after each."

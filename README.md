@@ -3,10 +3,10 @@
 A self-contained `nix` toolbox + **pinned firmware** for flashing **Toshiba PX05 SAS SSDs** (the PX05SVB/SMB/SRB family) to firmware **AS10** via the SCSI `WRITE BUFFER` command.
 
 ```bash
-sudo nix run github:jgus/toshiba-px05-fw-flake -- --dry-run <serial> [<serial> ...]
+sudo nix run github:jgus-org/toshiba-px05-fw-flake -- --dry-run <serial> [<serial> ...]
 ```
 
-Standalone (like `github:jgus/connectx3-flake`), with its own `nixpkgs` pin. The firmware is fetched by `fetchurl` from Dell at build time — no blob committed here, nothing to download by hand. Makes no assumptions about the host: runs on a live machine or a NixOS installer boot.
+Standalone (like `github:jgus-org/connectx3-flake`), with its own `nixpkgs` pin. The firmware is fetched by `fetchurl` from Dell at build time — no blob committed here, nothing to download by hand. Makes no assumptions about the host: runs on a live machine or a NixOS installer boot.
 
 ## What it provides
 
@@ -38,13 +38,13 @@ lsblk -S -o NAME,SERIAL,MODEL,REV
 Then dry-run before writing (no root needed for the inventory):
 
 ```bash
-sudo nix run github:jgus/toshiba-px05-fw-flake -- --dry-run <serial> [<serial> ...]
+sudo nix run github:jgus-org/toshiba-px05-fw-flake -- --dry-run <serial> [<serial> ...]
 ```
 
 It prints each drive's model, current firmware, and whether it's in use. To flash, drop `--dry-run`:
 
 ```bash
-sudo nix run github:jgus/toshiba-px05-fw-flake -- <serial> [<serial> ...]
+sudo nix run github:jgus-org/toshiba-px05-fw-flake -- <serial> [<serial> ...]
 ```
 
 **Idle drives** (not mounted, not an md/zfs/LVM member) flash in place. **In-use drives** are refused by default — handle them one of two ways:

@@ -7,12 +7,33 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
     flake-utils.url = "github:numtide/flake-utils";
+    treefmt-nix = {
+      url = "github:numtide/treefmt-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = { self, nixpkgs, flake-utils }:
-    flake-utils.lib.eachDefaultSystem (system:
+  outputs =
+    {
+      self,
+      nixpkgs,
+      flake-utils,
+      treefmt-nix,
+    }:
+    flake-utils.lib.eachDefaultSystem (
+      system:
       let
-        pkgs = import nixpkgs { inherit system; config.allowUnfree = true; };
+        pkgs = import nixpkgs {
+          inherit system;
+          config.allowUnfree = true;
+        };
+
+        treefmtEval = treefmt-nix.lib.evalModule pkgs {
+          projectRootFile = "flake.nix";
+          programs.nixfmt.enable = true;
+          programs.shfmt.enable = true;
+        };
+
         targetModel = "PX05SVB096Y";
         targetFw = "AS10";
 
@@ -21,30 +42,53 @@
         dup = pkgs.fetchurl {
           url = "https://dl.dell.com/FOLDER05601935M/2/SAS-Drive_Firmware_1DJXX_LN_AS10_A00_01.BIN";
           hash = "sha256-EJmc2xA3FC9rci4dq88+xr+SRqn1hom+5MqSbwlaqPM=";
-          curlOptsList = [ "--user-agent" "Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0" ];
+          curlOptsList = [
+            "--user-agent"
+            "Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0"
+          ];
           meta.license = pkgs.lib.licenses.unfree;
         };
 
         # Raw microcode carved from the DUP and validated (Toshiba signature, internal length field, sha256).
-        firmware = pkgs.runCommand "toshiba-px05-as10-fw"
-          { nativeBuildInputs = [ pkgs.python3 ]; meta.license = pkgs.lib.licenses.unfree; }
-          ''
-            mkdir -p $out
-            python3 ${./extract.py} ${dup} $out/AS10_PX05.bin
-          '';
+        firmware =
+          pkgs.runCommand "toshiba-px05-as10-fw"
+            {
+              nativeBuildInputs = [ pkgs.python3 ];
+              meta.license = pkgs.lib.licenses.unfree;
+            }
+            ''
+              mkdir -p $out
+              python3 ${./extract.py} ${dup} $out/AS10_PX05.bin
+            '';
 
         # writeShellScriptBin (not writeShellApplication): the flasher needs its own per-drive error handling, so it
         # must not run under writeShellApplication's forced `set -e`. PATH is pinned to absolute store paths so the tool
         # works under `sudo` / `nix run` regardless of the caller's PATH.
-        px05-flash = pkgs.writeShellScriptBin "px05-flash" (''
-          export PATH=${pkgs.lib.makeBinPath [ pkgs.sg3_utils pkgs.util-linux pkgs.coreutils pkgs.gnugrep ]}:$PATH
-          FW_DEFAULT="${firmware}/AS10_PX05.bin"
-          TARGET_MODEL="${targetModel}"
-          TARGET_FW="${targetFw}"
-        '' + builtins.readFile ./px05-flash.sh);
+        px05-flash = pkgs.writeShellScriptBin "px05-flash" (
+          ''
+            export PATH=${
+              pkgs.lib.makeBinPath [
+                pkgs.sg3_utils
+                pkgs.util-linux
+                pkgs.coreutils
+                pkgs.gnugrep
+              ]
+            }:$PATH
+            FW_DEFAULT="${firmware}/AS10_PX05.bin"
+            TARGET_MODEL="${targetModel}"
+            TARGET_FW="${targetFw}"
+          ''
+          + builtins.readFile ./px05-flash.sh
+        );
       in
       {
-        packages = { inherit firmware dup px05-flash; default = px05-flash; };
+        packages = {
+          inherit firmware dup px05-flash;
+          default = px05-flash;
+        };
+
+        formatter = treefmtEval.config.build.wrapper;
+        checks.formatting = treefmtEval.config.build.check self;
 
         apps.default = {
           type = "app";
@@ -53,7 +97,11 @@
         };
 
         devShells.default = pkgs.mkShellNoCC {
-          buildInputs = [ px05-flash pkgs.sg3_utils pkgs.util-linux ];
+          buildInputs = [
+            px05-flash
+            pkgs.sg3_utils
+            pkgs.util-linux
+          ];
           shellHook = ''
             export PX05_FW="${firmware}/AS10_PX05.bin"
             echo "--- Toshiba PX05 ($targetModel) firmware shell — target $targetFw ---"
@@ -66,5 +114,6 @@
             echo "Refuses mounted / md / zfs member drives unless --force-in-use. Verifies FW after each."
           '';
         };
-      });
+      }
+    );
 }

@@ -6,7 +6,13 @@
   # — intended for a live machine or a NixOS installer boot.
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
-    flake-utils.url = "github:numtide/flake-utils";
+
+    # Only for lib.eachDefaultLinuxSystem below.
+    flake-lib = {
+      url = "github:jgus-org/flake-lib/v1";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     treefmt-nix = {
       url = "github:numtide/treefmt-nix";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -17,10 +23,10 @@
     {
       self,
       nixpkgs,
-      flake-utils,
+      flake-lib,
       treefmt-nix,
     }:
-    flake-utils.lib.eachDefaultSystem (
+    flake-lib.lib.eachDefaultLinuxSystem (
       system:
       let
         pkgs = import nixpkgs {

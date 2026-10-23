@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Extract the raw Toshiba microcode from a Dell SAS-drive firmware DUP."""
+
 import sys, io, gzip, tarfile, struct, hashlib
 
 src, out = sys.argv[1], sys.argv[2]

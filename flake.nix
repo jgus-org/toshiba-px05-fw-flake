@@ -5,26 +5,15 @@
   # The proprietary Toshiba firmware is fetched from Dell at build time. Makes no assumptions about the host it flashes
   # — intended for a live machine or a NixOS installer boot.
   inputs = {
+    flake-lib.url = "github:jgus-org/flake-lib/v1";
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
-
-    # Only for lib.eachDefaultLinuxSystem below.
-    flake-lib = {
-      url = "github:jgus-org/flake-lib/v1";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
-    treefmt-nix = {
-      url = "github:numtide/treefmt-nix";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
   };
 
   outputs =
     {
       self,
-      nixpkgs,
       flake-lib,
-      treefmt-nix,
+      nixpkgs,
     }:
     flake-lib.lib.eachDefaultLinuxSystem (
       system:
@@ -34,10 +23,8 @@
           config.allowUnfree = true;
         };
 
-        treefmtEval = treefmt-nix.lib.evalModule pkgs {
-          projectRootFile = "flake.nix";
-          programs.nixfmt.enable = true;
-          programs.shfmt.enable = true;
+        orgFormatting = flake-lib.lib.mkFormatting {
+          inherit self system;
         };
 
         targetModel = "PX05SVB096Y";
@@ -46,21 +33,21 @@
         # Dell DUP 1DJXX (AS10, 2019-09-17): the only public source of the AS10 image. dl.dell.com 403s the default
         # fetcher user-agent, so a browser UA is set.
         dup = pkgs.fetchurl {
-          url = "https://dl.dell.com/FOLDER05601935M/2/SAS-Drive_Firmware_1DJXX_LN_AS10_A00_01.BIN";
-          hash = "sha256-EJmc2xA3FC9rci4dq88+xr+SRqn1hom+5MqSbwlaqPM=";
           curlOptsList = [
             "--user-agent"
             "Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0"
           ];
+          hash = "sha256-EJmc2xA3FC9rci4dq88+xr+SRqn1hom+5MqSbwlaqPM=";
           meta.license = pkgs.lib.licenses.unfree;
+          url = "https://dl.dell.com/FOLDER05601935M/2/SAS-Drive_Firmware_1DJXX_LN_AS10_A00_01.BIN";
         };
 
         # Raw microcode carved from the DUP and validated (Toshiba signature, internal length field, sha256).
         firmware =
           pkgs.runCommand "toshiba-px05-as10-fw"
             {
-              nativeBuildInputs = [ pkgs.python3 ];
               meta.license = pkgs.lib.licenses.unfree;
+              nativeBuildInputs = [ pkgs.python3 ];
             }
             ''
               mkdir -p $out
@@ -88,20 +75,12 @@
         );
       in
       {
-        packages = {
-          inherit firmware dup px05-flash;
-          default = px05-flash;
-        };
-
-        formatter = treefmtEval.config.build.wrapper;
-        checks.formatting = treefmtEval.config.build.check self;
-
         apps.default = {
-          type = "app";
-          program = "${px05-flash}/bin/px05-flash";
           meta.description = "Flash Toshiba PX05 SAS SSDs to ${targetFw}";
+          program = "${px05-flash}/bin/px05-flash";
+          type = "app";
         };
-
+        checks.formatting = orgFormatting.check;
         devShells.default = pkgs.mkShellNoCC {
           buildInputs = [
             px05-flash
@@ -119,6 +98,11 @@
             echo
             echo "Refuses mounted / md / zfs member drives unless --force-in-use. Verifies FW after each."
           '';
+        };
+        formatter = orgFormatting.formatter;
+        packages = {
+          inherit dup firmware px05-flash;
+          default = px05-flash;
         };
       }
     );

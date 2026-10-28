@@ -23,11 +23,11 @@ sudo nix run github:jgus-org/toshiba-px05-fw-flake -- <serial> [<serial> ...]
 
 Or take the outputs from a flake input — `inputs.<name>.apps.${system}.default`, `inputs.<name>.packages.${system}.firmware`, `inputs.<name>.devShells.${system}.default`.
 
-## Firmware and licence
+## Firmware
 
-AS10 (`1DJXX`, released 2019-09-17) is the last firmware for these drives; it supersedes AS0E/AS0C/AS0B, and the image is identical across the PX05SMB/SVB/SRB family. It is Toshiba's proprietary property: the build fetches it from Dell, and no blob is committed to or redistributed from this repository.
+AS10 (`1DJXX`, released 2019-09-17) is the last firmware for these drives; it supersedes AS0E/AS0C/AS0B, and the image is identical across the PX05SMB/SVB/SRB family. It is Toshiba's image, packaged by Dell: the build fetches it from Dell, and no blob is committed to this repository.
 
-Two consequences for the consumer. The build needs to reach `dl.dell.com`, so it cannot run on a fully offline builder. And the image is unfree software — this flake permits it in its own package set, and anything you build from these outputs carries that licence.
+Two consequences for the consumer. The build needs to reach `dl.dell.com`, so it cannot run on a fully offline builder. And the image is a vendor binary this flake permits in its own package set, so consuming its outputs needs no unfree acceptance of your own.
 
 The build checks the image it carves out of the DUP against a pinned sha256 and fails loudly if Dell ever serves something else, so every successful build hands you the same bytes.
 
@@ -56,3 +56,5 @@ The image is transferred as 64 KiB `WRITE BUFFER` chunks with offsets, and the d
 After a flash the tool rescans the drive and reads the firmware level back. Some units only update the reported `REV` string after a power cycle, so a `NOTE: … reports FW 'AS0E' (expected AS10)` line is not a failed flash — re-check the drive after the next power cycle before repeating the write.
 
 Dry-run first, then flash one drive and confirm it verifies `AS10` before doing the rest. Keep the machine on stable power for the duration, and do one machine at a time. This is a maintenance release for healthy drives, not a repair for a specific failure — weigh the small risk against the benefit on a drive that is working fine.
+
+See [LICENSE.md](LICENSE.md) for licensing and copyright, and [NOTICE.md](NOTICE.md) for the terms of upstream and distributed artifacts.

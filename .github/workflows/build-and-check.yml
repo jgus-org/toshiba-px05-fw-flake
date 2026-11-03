@@ -10,9 +10,8 @@
 # that does not have it installs it with `-- adopt build-and-check.yml`. Edit it in
 # jgus-org/flake-lib's templates/workflows. Binary caching uses the fleet Attic cache
 # whenever ATTIC_TOKEN resolves -- an organization secret covers every repository at once --
-# and a repository or fork pull request with no token runs on the public cache alone. Nix
-# fetches a github input anonymously, so a flake that locks a private repository needs
-# BUILD_TOKEN, and a repository without it runs on the public inputs it can fetch.
+# and a repository or fork pull request with no token runs on the public cache alone. A flake
+# that locks a private repository needs BUILD_TOKEN.
 #
 # A gate runs on a hosted runner unless the repository sets the `RUNNER` variable to a
 # label one of its own runners carries.

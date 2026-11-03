@@ -3,10 +3,11 @@
 # day's templates are committed before an update run reads its workflow file, and a workflow is
 # read when its run starts, so a refresh lands on the run after the one that wrote it.
 #
-# The `update` concurrency group is what keeps this commit and an update run's commit apart:
-# that run pushes with an ordinary push, and a refresh committed beside it would cost it its
-# commit. A group holds one pending run, so a refresh that arrives while the group is busy is
-# dropped -- a lost day, not a lost state.
+# Nothing waits for an update run's commit and nothing waits for this one. Both push the same
+# branch expecting the SHA they read, so whichever lands second reports the concurrent change
+# instead of overwriting it -- a run lost, not a state lost. A run that cannot be cancelled is
+# the reason: a group that held both would be held forever by it, freezing every later update in
+# the repository, including the refresh that would carry the fix.
 #
 # Pushing a workflow file needs a credential that may write workflows. A run's own token cannot
 # unless the workflow grants `workflows: write`, so without ORG_UPDATE_TOKEN this run advances
@@ -22,10 +23,6 @@ on:
 
 permissions:
   contents: write
-
-concurrency:
-  group: update
-  cancel-in-progress: false
 
 jobs:
   workflows:

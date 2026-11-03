@@ -26,10 +26,6 @@ on:
 permissions:
   contents: read
 
-concurrency:
-  group: build-and-check-${{ github.ref }}
-  cancel-in-progress: true
-
 jobs:
   build-and-check:
     runs-on: ${{ vars.RUNNER || 'ubuntu-latest' }}

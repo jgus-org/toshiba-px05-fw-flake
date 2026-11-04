@@ -5,8 +5,11 @@
   # The proprietary Toshiba firmware is fetched from Dell at build time. Makes no assumptions about the host it flashes
   # — intended for a live machine or a NixOS installer boot.
   inputs = {
-    flake-lib.url = "github:jgus-org/flake-lib/v1";
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
+    flake-lib = {
+      inputs.nixpkgs.follows = "nixpkgs";
+      url = "github:jgus-org/flake-lib/v1";
+    };
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
   };
 
   outputs =

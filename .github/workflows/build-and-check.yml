@@ -1,6 +1,6 @@
 # The gate a pull request has to pass: `nix run github:jgus-org/flake-lib/v1#build-and-check`, which builds every package this flake publishes for the runner's system and then runs `nix flake check`. The check alone is not the gate (it looks at the shape of `packages` without building them), and the updater's build is not either, because it runs on the publication path after the merge.
 #
-# Rewritten wholesale by `nix run github:jgus-org/flake-lib/v1#update-workflows`. Edit it in jgus-org/flake-lib's templates/workflows, not here. What a producer can configure about the gate (`passthru.ciBuildSkip`, the `RUNNER` variable, and the repository's secrets) is documented in AGENTS.md's "Build verification".
+# Rewritten wholesale by `nix run github:jgus-org/flake-lib/v1#update-workflows`. Edit it in jgus-org/flake-lib's templates/workflows, not here. What a producer can configure about the gate (`passthru.ciBuildSkip`, the `RUNNER` variable, the repository's secrets, and the `test-ci` app) is documented in AGENTS.md's "Build verification".
 
 name: Build and Check
 
@@ -22,6 +22,6 @@ jobs:
           token: ${{ secrets.ATTIC_TOKEN }}
           github-token: ${{ secrets.BUILD_TOKEN }}
 
-      # The gate is one published command so this path and the publication path run one definition. Both of its halves run even when the first fails: a tree with two problems and a gate that stops at the first will report only one.
+      # The gate is one published command so this path and the publication path run one definition. Every step runs even when an earlier one fails: a tree with two problems and a gate that stops at the first will report only one.
       - name: Run the gate
         run: nix run github:jgus-org/flake-lib/v1#build-and-check
